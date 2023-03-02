@@ -14,26 +14,61 @@ public class PlayerController : MonoBehaviour {
    private AudioSource playerAudio; // 사용할 오디오 소스 컴포넌트
 
    private void Start() {
+        playerRigidbody = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        playerAudio = GetComponent<AudioSource>();
        // 초기화
    }
 
    private void Update() {
+        if (isDead)
+        {
+            return;
+        }
+        if(Input.GetMouseButtonDown(0) && jumpCount < 2)
+        {
+            jumpCount++;
+            playerRigidbody.velocity = Vector2.zero;
+            playerRigidbody.AddForce(new Vector2(0, jumpForce));
+            playerAudio.Play();
+        }
+        else if(Input.GetMouseButtonUp(0) && playerRigidbody.velocity.y > 0)
+        {
+            playerRigidbody.velocity = playerRigidbody.velocity * 0.5f;
+
+        }
+        animator.SetBool("Grounded", isGrounded);
        // 사용자 입력을 감지하고 점프하는 처리
    }
 
    private void Die() {
+        animator.SetTrigger("Die");
+        playerAudio.clip = deathClip;
+        playerAudio.Play();
+        playerRigidbody.velocity = Vector2.zero;
+        isDead = true;
        // 사망 처리
    }
 
    private void OnTriggerEnter2D(Collider2D other) {
+        if(other.tag == "Dead" && !isDead)
+        {
+            Die();
+        }
        // 트리거 콜라이더를 가진 장애물과의 충돌을 감지
    }
 
    private void OnCollisionEnter2D(Collision2D collision) {
+        if(collision.contacts[0].normal.y > 0.7f)
+        {
+            isGrounded = true;
+            jumpCount = 0;
+        }
        // 바닥에 닿았음을 감지하는 처리
    }
 
    private void OnCollisionExit2D(Collision2D collision) {
+        isGrounded = false;
        // 바닥에서 벗어났음을 감지하는 처리
    }
 }
